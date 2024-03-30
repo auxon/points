@@ -12,8 +12,16 @@ npm run build
 npm run test
 ```
 
-## Run Tests on the Bitcoin Testnet
+## Run on Testnet
+
+Deploy the contract
 
 ```sh
-npm run test:testnet
+npm run deploy
+```
+
+Start the miner (Mac only)
+
+```sh
+npm run mine
 ```
