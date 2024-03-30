@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "errors": [],
+  "scryptfile": "hashPoints.scrypt",
+  "sourceMapFile": "hashPoints.scrypt.map",
+  "ctxMethods": [
+    "claim",
+    "redeem"
+  ]
+}

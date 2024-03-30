@@ -46,10 +46,10 @@ export class HashPoints extends SmartContract {
 
 	@method()
 	public redeem(amount: bigint, message: ByteString) {
-		assert(amount > 0, 'amount negative')
-		assert(amount <= this.points, 'not enough points')
-		assert(byteString2Int(message) != 0n, 'no message')
+		assert(amount > 0n, 'amount negative')
+		assert(amount <= this.points, 'insufficient balance')
 		this.points = this.points - amount;
+		assert(this.points > 0n, 'points overflow');
 		const outputs = this.buildStateOutput(this.ctx.utxo.value) + this.buildChangeOutput();
 		assert(this.ctx.hashOutputs == hash256(outputs), 'hashOutputs mismatch')
 		console.log(`redeem(${amount} "${message}") ${JSON.stringify({ points: this.points })}`);

@@ -1,0 +1,47 @@
+struct __scrypt_ts_Change {  int amount;  Ripemd160 address;}
+
+contract HashPoints {
+  @state int points;
+  int diff_1_target;
+  bytes __scrypt_ts_ctx_hashoutputs;
+  bytes __scrypt_ts_ctx_outpoint_txid;
+  int __scrypt_ts_ctx_outpoint_outputindex;
+  int __scrypt_ts_ctx_value;
+  __scrypt_ts_Change __scrypt_ts_change;
+  constructor(int diff) {
+    this.points = 0;
+    this.diff_1_target = diff;
+  }
+  public function claim(bytes nonce, SigHashPreimage __scrypt_ts_txPreimage, int __scrypt_ts_changeAmount, Ripemd160 __scrypt_ts_changeAddress) {
+    require(Tx.checkPreimageSigHashType(__scrypt_ts_txPreimage, SigHashType(b'41')));
+    this.__scrypt_ts_ctx_hashoutputs = SigHash.hashOutputs(__scrypt_ts_txPreimage);
+    this.__scrypt_ts_ctx_outpoint_outputindex = unpack(SigHash.outpoint(__scrypt_ts_txPreimage)[32 :]);
+    this.__scrypt_ts_ctx_outpoint_txid = SigHash.outpoint(__scrypt_ts_txPreimage)[0:32];
+    this.__scrypt_ts_ctx_value = SigHash.value(__scrypt_ts_txPreimage);
+    this.__scrypt_ts_change = {__scrypt_ts_changeAmount, __scrypt_ts_changeAddress};
+    Sha256 hash = hash256(this.__scrypt_ts_ctx_outpoint_txid + nonce);
+    int diff = this.diff_1_target / unpack(reverseBytes(hash, 32));
+    require(diff > 0);
+    this.points = this.points + diff;
+    bytes outputs = this.buildStateOutput(this.__scrypt_ts_ctx_value) + this.buildChangeOutput();
+    require(this.__scrypt_ts_ctx_hashoutputs == hash256(outputs));
+    
+  }
+  public function redeem(int amount, bytes message, SigHashPreimage __scrypt_ts_txPreimage, int __scrypt_ts_changeAmount, Ripemd160 __scrypt_ts_changeAddress) {
+    require(Tx.checkPreimageSigHashType(__scrypt_ts_txPreimage, SigHashType(b'41')));
+    this.__scrypt_ts_ctx_hashoutputs = SigHash.hashOutputs(__scrypt_ts_txPreimage);
+    this.__scrypt_ts_ctx_outpoint_outputindex = unpack(SigHash.outpoint(__scrypt_ts_txPreimage)[32 :]);
+    this.__scrypt_ts_ctx_outpoint_txid = SigHash.outpoint(__scrypt_ts_txPreimage)[0:32];
+    this.__scrypt_ts_ctx_value = SigHash.value(__scrypt_ts_txPreimage);
+    this.__scrypt_ts_change = {__scrypt_ts_changeAmount, __scrypt_ts_changeAddress};
+    require(amount > 0);
+    require(amount <= this.points);
+    this.points = this.points - amount;
+    require(this.points > 0);
+    bytes outputs = this.buildStateOutput(this.__scrypt_ts_ctx_value) + this.buildChangeOutput();
+    require(this.__scrypt_ts_ctx_hashoutputs == hash256(outputs));
+    
+  }
+  function buildStateOutput(int amount) : bytes {  return Utils.buildOutput(this.getStateScript(), amount);}
+  function buildChangeOutput() : bytes {  return this.__scrypt_ts_change.amount > 0 ? Utils.buildOutput(Utils.buildPublicKeyHashScript(this.__scrypt_ts_change.address), this.__scrypt_ts_change.amount) : b'';}
+}
