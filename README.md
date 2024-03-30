@@ -1,4 +1,4 @@
-# Hash Points
+# Points
 
 ## Build
 
